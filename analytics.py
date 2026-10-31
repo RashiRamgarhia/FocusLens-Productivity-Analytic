@@ -113,3 +113,41 @@ def top_apps_breakdown(df, limit=5):
 
 def weekly_trend(df):
     if df.empty:
+        return pd.DataFrame(columns=categories.CATEGORY_NAMES)
+    pivot = df.pivot_table(
+        index="date",
+        columns="category",
+        values="seconds",
+        aggfunc="sum",
+        fill_value=0
+    )
+    pivot = pivot.reindex(columns=categories.CATEGORY_NAMES, fill_value=0)
+    return pivot / 3600.0
+
+
+def generate_insights(df):
+    if df.empty:
+        return ["No activity logged today yet. Tracking is running in the background."]
+
+    insights = []
+    by_app = df.groupby("app_name")["seconds"].sum()
+    if not by_app.empty:
+        top_app = by_app.idxmax()
+        insights.append(f"Most used app: {top_app} ({format_time(by_app.max())})")
+
+    unproductive = df[df["category"].isin(["Unproductive", "Distracting"])]
+    if not unproductive.empty:
+        worst_app = unproductive.groupby("app_name")["seconds"].sum().idxmax()
+        worst_hour = unproductive.groupby("hour")["seconds"].sum().idxmax()
+        unprod_seconds = unproductive.groupby("app_name")["seconds"].sum().max()
+        insights.append(f"Top unproductive: {worst_app} ({format_time(unprod_seconds)}) around {worst_hour:02d}:00")
+    else:
+        insights.append("Great job! Zero unproductive apps today.")
+
+    productive = df[df["category"] == "Productive"]
+    if not productive.empty:
+        peak_hour = productive.groupby("hour")["seconds"].sum().idxmax()
+        insights.append(f"Best focus window: {peak_hour:02d}:00 - {(peak_hour + 1) % 24:02d}:00")
+
+    return insights
+
