@@ -138,3 +138,49 @@ def get_switch_count(start_date, end_date):
 
 def clear_all():
     conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM usage")
+    cursor.execute("DELETE FROM window_switches")
+    cursor.execute("DELETE FROM focus_sessions")
+    conn.commit()
+    conn.close()
+
+
+def get_setting(key, default=None):
+    conn = get_connection()
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    conn.close()
+    return row[0] if row else default
+
+
+def set_setting(key, value):
+    conn = get_connection()
+    conn.execute("""
+        INSERT INTO settings (key, value) VALUES (?, ?) 
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    """, (key, str(value)))
+    conn.commit()
+    conn.close()
+
+
+def get_custom_categories():
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT app_name, category FROM custom_categories ORDER BY app_name"
+    ).fetchall()
+    conn.close()
+    category_map = {"Neutral": "Other", "Necessary": "Other", "Distracting": "Unproductive"}
+    return [(app, category_map.get(cat, cat)) for app, cat in rows]
+
+
+def save_custom_category(app_name, category):
+    app_name = str(app_name).strip().lower().replace(".exe", "")
+    if not app_name:
+        return
+    category_map = {"Neutral": "Other", "Necessary": "Other", "Distracting": "Unproductive"}
+    category = category_map.get(category, category)
+    if category not in {"Productive", "Other", "Unproductive"}:
+        return
+    conn = get_connection()
+    conn.execute("""
+        INSERT INTO custom_categories (app_name, category) VALUES (?, ?) 
