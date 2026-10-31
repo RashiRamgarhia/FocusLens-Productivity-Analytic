@@ -405,3 +405,48 @@ class FocusLensApp(ctk.CTk):
                 ax2.set_xlim(0, max_val * 1.35 + 0.1)
                 ax2.spines["top"].set_visible(False)
                 ax2.spines["right"].set_visible(False)
+                ax2.grid(axis="x", linestyle="--", alpha=0.3)
+        else:
+            ax = self.fig_dash.add_subplot(111)
+            ax.text(0.5, 0.5, "No activity logged today yet.\nTracking is running in the background.",
+                    ha="center", va="center", color=COLORS["subtext"], fontsize=12)
+            ax.set_axis_off()
+
+        self.fig_dash.tight_layout()
+        self.canvas_dash.draw_idle()
+
+        # History charts
+        df_week = analytics.load_data(days=7)
+        self.fig_history.clear()
+        if not df_week.empty and df_week["seconds"].sum() > 0:
+            ax_week = self.fig_history.add_subplot(211)
+            week_table = analytics.weekly_trend(df_week)
+            colors = [COLORS.get(c, COLORS.get("Necessary", "#F1C40F")) for c in week_table.columns]
+            week_table.plot(kind="bar", stacked=True, ax=ax_week, color=colors, width=0.45, rot=0)
+            ax_week.set_title("Past 7 Days (Hours)", fontsize=11)
+            ax_week.set_ylabel("Hours")
+            ax_week.spines["top"].set_visible(False)
+            ax_week.spines["right"].set_visible(False)
+
+            ax_hourly = self.fig_history.add_subplot(212)
+            matrix = analytics.hourly_intensity_matrix(df_week)
+            ax_hourly.plot(matrix.index, matrix["Productive"], label="Productive", color=COLORS["Productive"], lw=2)
+            unprod_col = "Unproductive" if "Unproductive" in matrix.columns else "Distracting"
+            ax_hourly.plot(matrix.index, matrix[unprod_col], label="Unproductive", color=COLORS["Unproductive"], lw=2)
+            ax_hourly.fill_between(matrix.index, matrix["Productive"], color=COLORS["Productive"], alpha=0.15)
+            ax_hourly.set_title("Daily Focus by Hour (Average Minutes)", fontsize=11)
+            ax_hourly.set_xlabel("Hour of Day (0–23)")
+            ax_hourly.set_xticks(range(0, 24, 2))
+            ax_hourly.legend(frameon=False, loc="upper right")
+            ax_hourly.spines["top"].set_visible(False)
+            ax_hourly.spines["right"].set_visible(False)
+        else:
+            ax = self.fig_history.add_subplot(111)
+            ax.text(0.5, 0.5, "No activity logged over the past 7 days.", ha="center", va="center",
+                    color=COLORS["subtext"], fontsize=12)
+            ax.set_axis_off()
+
+        self.fig_history.tight_layout()
+        self.canvas_history.draw_idle()
+
+        self._refresh_weekly_summary()
