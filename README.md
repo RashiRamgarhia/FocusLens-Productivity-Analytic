@@ -41,3 +41,45 @@ FocusLens monitors the active Windows application and classifies its time as **P
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/your-username/focuslens.git
+cd focuslens
+```
+
+### 2. Create and Activate Virtual Environment
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install Dependencies
+```powershell
+pip install -r requirements.txt
+```
+
+### 4. Run FocusLens
+```powershell
+python main.py
+```
+
+---
+
+## Project Structure
+
+```text
+focuslens/
+│
+├── main.py            # Application entrypoint
+├── dashboard.py       # CustomTkinter GUI layout, tabs, and charts
+├── tracker.py         # Background window monitor & idle detection thread
+├── analytics.py       # Metrics calculation, KPI aggregations, and insights
+├── categories.py      # App classification rules & website domain parser
+├── database.py        # SQLite database connection, tables, and CRUD helpers
+├── startup.py         # Windows Run key startup registry management
+├── requirements.txt   # Python package dependencies
+└── README.md          # Project documentation
+```
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
