@@ -41,3 +41,46 @@ UNPRODUCTIVE_APPS = [
     "primevideo",
     "amazon video",
     "netflix",
+    "disney+",
+    "disneyplus",
+    "hulu",
+    "twitch",
+    "tiktok"
+]
+# Legacy alias for backward compatibility
+DISTRACTING_APPS = UNPRODUCTIVE_APPS
+
+PRODUCTIVE_SITES = [
+    "github",
+    "stack overflow",
+    "leetcode",
+    "kaggle",
+    "geeksforgeeks",
+    "colab",
+    "jupyter",
+    "arxiv",
+    "coursera",
+    "nptel"
+]
+
+UNPRODUCTIVE_SITES = [
+    "youtube",
+    "spotify",
+    "prime video",
+    "primevideo",
+    "prime",
+    "amazon prime",
+    "netflix",
+    "hotstar",
+    "disney",
+    "disney+",
+    "instagram",
+    "facebook",
+    "reddit",
+    "twitter",
+    "x.com",
+    "twitch",
+    "tiktok",
+    "jiocinema",
+    "zee5",
+    "crunchyroll"
