@@ -91,3 +91,50 @@ def add_usage(app_name, seconds):
     cursor.execute("""
         INSERT INTO usage (date, hour, app_name, seconds)
         VALUES (?, ?, ?, ?)
+        ON CONFLICT(date, hour, app_name)
+        DO UPDATE SET seconds = seconds + excluded.seconds
+    """, (date_str, hour, app_name, int(seconds)))
+    conn.commit()
+    conn.close()
+
+
+def record_window_switch(app_name):
+    if not app_name:
+        return
+    now = datetime.now()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO window_switches (timestamp, date, hour, app_name)
+        VALUES (?, ?, ?, ?)
+    """, (now.isoformat(), now.strftime("%Y-%m-%d"), now.hour, app_name))
+    conn.commit()
+    conn.close()
+
+
+def get_usage(start_date, end_date):
+    conn = get_connection()
+    cursor = conn.cursor()
+    rows = cursor.execute("""
+        SELECT date, hour, app_name, seconds 
+        FROM usage 
+        WHERE date BETWEEN ? AND ?
+    """, (start_date, end_date)).fetchall()
+    conn.close()
+    return rows
+
+
+def get_switch_count(start_date, end_date):
+    conn = get_connection()
+    cursor = conn.cursor()
+    row = cursor.execute("""
+        SELECT COUNT(*) 
+        FROM window_switches 
+        WHERE date BETWEEN ? AND ?
+    """, (start_date, end_date)).fetchone()
+    conn.close()
+    return row[0] if row else 0
+
+
+def clear_all():
+    conn = get_connection()
