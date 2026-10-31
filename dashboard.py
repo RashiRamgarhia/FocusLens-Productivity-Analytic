@@ -360,3 +360,48 @@ class FocusLensApp(ctk.CTk):
 
     # ------------------ REFRESH & CHARTS ------------------
     def refresh_all_visuals(self):
+        df_today = analytics.load_data(days=1)
+        metrics = analytics.calculate_metrics(df_today, days=1)
+
+        # Update KPIs
+        self.kpi_labels["Score"].configure(text=f"{metrics['score']}%")
+        self.kpi_labels["Focus Efficiency"].configure(text=f"{metrics['focus_efficiency']}")
+        self.kpi_labels["Productive Time"].configure(text=metrics["productive_time"])
+        if "Unproductive" in self.kpi_labels:
+            self.kpi_labels["Unproductive"].configure(text=metrics["unproductive_time"])
+        elif "Distractions" in self.kpi_labels:
+            self.kpi_labels["Distractions"].configure(text=metrics["unproductive_time"])
+        self.kpi_labels["App Switches"].configure(text=str(metrics["context_switches"]))
+
+        goal = metrics["goal_minutes"]
+        completed = metrics["productive_minutes"]
+        self.goal_text.configure(text=f"Daily goal: {completed}m / {goal}m")
+        self.goal_progress.set(min(completed / max(1, goal), 1.0))
+
+        # Insights
+        insights = analytics.generate_insights(df_today)
+        self.insight_banner.configure(text="  •  ".join(insights))
+
+        # Dashboard charts
+        self.fig_dash.clear()
+        if not df_today.empty and df_today["seconds"].sum() > 0:
+            ax1 = self.fig_dash.add_subplot(121)
+            totals = df_today.groupby("category")["seconds"].sum()
+            colors = [COLORS.get(cat, COLORS.get("Necessary", "#F1C40F")) for cat in totals.index]
+            ax1.pie(
+                totals, labels=totals.index, autopct="%1.0f%%", startangle=90,
+                colors=colors, wedgeprops=dict(width=0.45, edgecolor=COLORS["card"])
+            )
+            ax1.set_title("Time by Category", fontsize=11, pad=10)
+
+            ax2 = self.fig_dash.add_subplot(122)
+            top = analytics.top_apps_breakdown(df_today, 5)
+            if not top.empty:
+                bars = ax2.barh(top.index[::-1], top.values[::-1], color=COLORS["accent"], height=0.55)
+                labels = [analytics.format_time(int(round(v * 60))) for v in top.values[::-1]]
+                ax2.bar_label(bars, labels=labels, padding=4, color=COLORS["text"], fontsize=9)
+                ax2.set_title("Top Apps Today", fontsize=11, pad=10)
+                max_val = max(top.values) if len(top.values) > 0 else 1
+                ax2.set_xlim(0, max_val * 1.35 + 0.1)
+                ax2.spines["top"].set_visible(False)
+                ax2.spines["right"].set_visible(False)
