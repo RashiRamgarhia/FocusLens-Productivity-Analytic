@@ -44,3 +44,48 @@ matplotlib.rcParams.update({
 
 
 class FocusLensApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("FocusLens - Personal Focus & Productivity Tracker")
+        self.geometry("1120x740")
+        self.minsize(980, 640)
+        self.configure(fg_color=COLORS["bg"])
+
+        self.tracker = Tracker()
+        self.active_alert = None
+
+        # Pomodoro variables
+        self.work_minutes_var = tk.StringVar(value="25")
+        self.break_minutes_var = tk.StringVar(value="5")
+        self.work_seconds = 25 * 60
+        self.break_seconds = 5 * 60
+        self.time_left = self.work_seconds
+        self.is_work_time = True
+        self.pomodoro_running = False
+        self.pomo_job = None
+
+        self._build_sidebar()
+        self._build_tabs()
+
+        categories.refresh_custom_categories()
+        self.refresh_all_visuals()
+
+        # Start tracking automatically on launch
+        self._toggle_tracking()
+
+        # Start periodic background loops
+        self._check_warnings_loop()
+        self.after(20000, self._auto_refresh_loop)
+
+        self.protocol("WM_DELETE_WINDOW", self._on_closing)
+
+    def _build_sidebar(self):
+        self.sidebar = ctk.CTkFrame(self, width=210, corner_radius=0, fg_color=COLORS["card"])
+        self.sidebar.pack(side="left", fill="y")
+
+        ctk.CTkLabel(
+            self.sidebar, text="FocusLens", font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="#FFFFFF"
+        ).pack(pady=(24, 2))
+
+        ctk.CTkLabel(
