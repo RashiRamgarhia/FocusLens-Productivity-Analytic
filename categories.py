@@ -1,0 +1,43 @@
+CATEGORY_NAMES = ["Productive", "Necessary", "Unproductive"]
+
+PRODUCTIVE_APPS = [
+    "code",
+    "cursor",
+    "antigravity",
+    "antigravity ide",
+    "pycharm64",
+    "idea64",
+    "spyder",
+    "sublime_text",
+    "notepad++",
+    "windowsterminal",
+    "cmd",
+    "powershell",
+    "winword",
+    "excel",
+    "powerpnt",
+    "postman",
+    "mysqlworkbench",
+    "obsidian",
+    "anaconda-navigator",
+    "git-bash",
+    "python",
+    "python3",
+    "chatgpt",
+    "copilotapp",
+    "copilotapphost"
+]
+
+UNPRODUCTIVE_APPS = [
+    "steam",
+    "discord",
+    "telegram",
+    "whatsapp",
+    "snapchat",
+    "epicgameslauncher",
+    "spotify",
+    "spotifylauncher",
+    "prime video",
+    "primevideo",
+    "amazon video",
+    "netflix",
