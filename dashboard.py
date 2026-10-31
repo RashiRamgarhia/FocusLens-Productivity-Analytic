@@ -270,3 +270,48 @@ class FocusLensApp(ctk.CTk):
         self._refresh_weekly_summary()
         return tab
 
+    # ------------------ SETTINGS TAB ------------------
+    def _create_settings_tab(self):
+        tab = ctk.CTkScrollableFrame(self.tab_container, fg_color="transparent")
+        ctk.CTkLabel(tab, text="Settings", font=ctk.CTkFont(size=22, weight="bold")).pack(anchor="w", pady=(8, 14))
+
+        # Daily Goal Card
+        goal_box = ctk.CTkFrame(tab, fg_color=COLORS["card"])
+        goal_box.pack(fill="x", pady=6)
+        ctk.CTkLabel(goal_box, text="Daily Productive Goal", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=16, pady=(12, 4))
+
+        goal_row = ctk.CTkFrame(goal_box, fg_color="transparent")
+        goal_row.pack(anchor="w", padx=16, pady=(0, 14))
+        self.goal_input_var = tk.StringVar(value=str(database.get_setting("daily_goal_minutes", 180)))
+        ctk.CTkEntry(goal_row, width=80, textvariable=self.goal_input_var).pack(side="left")
+        ctk.CTkLabel(goal_row, text="minutes").pack(side="left", padx=8)
+        ctk.CTkButton(goal_row, text="Save Goal", width=90, command=self._save_goal).pack(side="left", padx=8)
+
+        # Custom Categories Card
+        cat_box = ctk.CTkFrame(tab, fg_color=COLORS["card"])
+        cat_box.pack(fill="x", pady=6)
+        ctk.CTkLabel(cat_box, text="Custom App Categories", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=16, pady=(12, 4))
+        ctk.CTkLabel(cat_box, text="Add an application name (e.g. chrome, spotify, youtube) to override its category.",
+                     text_color=COLORS["subtext"]).pack(anchor="w", padx=16)
+
+        input_row = ctk.CTkFrame(cat_box, fg_color="transparent")
+        input_row.pack(fill="x", padx=16, pady=10)
+        self.new_app_name_var = tk.StringVar()
+        self.new_category_var = tk.StringVar(value="Productive")
+        ctk.CTkEntry(input_row, textvariable=self.new_app_name_var, placeholder_text="App name (e.g. spotify, chrome)").pack(side="left", fill="x", expand=True)
+        ctk.CTkOptionMenu(input_row, values=["Productive", "Necessary", "Unproductive"], variable=self.new_category_var, width=130).pack(side="left", padx=8)
+        ctk.CTkButton(input_row, text="Add", width=70, command=self._add_custom_category).pack(side="left")
+
+        # Quick suggestions row
+        self.suggestions_frame = ctk.CTkFrame(cat_box, fg_color="transparent")
+        self.suggestions_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self._refresh_quick_suggestions()
+
+        self.categories_list_frame = ctk.CTkFrame(cat_box, fg_color="transparent")
+        self.categories_list_frame.pack(fill="x", padx=16, pady=(0, 14))
+        self._refresh_categories_ui()
+
+        # Startup Card
+        startup_box = ctk.CTkFrame(tab, fg_color=COLORS["card"])
+        startup_box.pack(fill="x", pady=6)
+        self.startup_var = tk.IntVar(value=1 if startup.is_enabled() else 0)
