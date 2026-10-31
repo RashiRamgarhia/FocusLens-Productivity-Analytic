@@ -586,3 +586,48 @@ class FocusLensApp(ctk.CTk):
             if not 1 <= minutes <= 1440:
                 raise ValueError
         except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a daily goal between 1 and 1440 minutes.")
+            return
+
+        database.set_setting("daily_goal_minutes", minutes)
+        self.refresh_all_visuals()
+        messagebox.showinfo("Saved", f"Daily goal set to {minutes} minutes.")
+
+    def _add_custom_category(self):
+        name = self.new_app_name_var.get().strip().lower().replace(".exe", "")
+        if not name:
+            messagebox.showerror("Missing Name", "Please enter an application name.")
+            return
+
+        database.save_custom_category(name, self.new_category_var.get())
+        categories.refresh_custom_categories()
+        self.new_app_name_var.set("")
+        self._refresh_categories_ui()
+        self._refresh_quick_suggestions()
+        self.refresh_all_visuals()
+
+    def _refresh_categories_ui(self):
+        for child in self.categories_list_frame.winfo_children():
+            child.destroy()
+
+        entries = database.get_custom_categories()
+        if not entries:
+            ctk.CTkLabel(self.categories_list_frame, text="No custom categories added.",
+                         text_color=COLORS["subtext"]).pack(anchor="w")
+            return
+
+        for app_name, category in entries:
+            row = ctk.CTkFrame(self.categories_list_frame, fg_color="#262A34")
+            row.pack(fill="x", pady=2)
+            cat_color = COLORS.get(category, COLORS["Necessary"])
+            ctk.CTkLabel(row, text=f"{app_name}  →  ", font=ctk.CTkFont(size=12)).pack(side="left", padx=(10, 0), pady=4)
+            ctk.CTkLabel(row, text=category, text_color=cat_color, font=ctk.CTkFont(size=12, weight="bold")).pack(side="left", pady=4)
+            ctk.CTkButton(
+                row, text="Remove", width=65, height=24, fg_color=COLORS["Unproductive"],
+                hover_color="#CC0000",
+                command=lambda a=app_name: self._remove_custom_category(a)
+            ).pack(side="right", padx=6, pady=2)
+
+    def _remove_custom_category(self, app_name):
+        database.remove_custom_category(app_name)
+        categories.refresh_custom_categories()
