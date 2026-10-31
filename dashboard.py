@@ -631,3 +631,48 @@ class FocusLensApp(ctk.CTk):
     def _remove_custom_category(self, app_name):
         database.remove_custom_category(app_name)
         categories.refresh_custom_categories()
+        self._refresh_categories_ui()
+        self._refresh_quick_suggestions()
+        self.refresh_all_visuals()
+
+    def _toggle_startup(self):
+        try:
+            startup.set_enabled(bool(self.startup_var.get()))
+        except Exception as err:
+            self.startup_var.set(1 if startup.is_enabled() else 0)
+            messagebox.showerror("Error", f"Could not update Windows startup setting:\n{err}")
+
+    # ------------------ EXPORT & REPORT ------------------
+    def _refresh_weekly_summary(self):
+        if not hasattr(self, "weekly_textbox"):
+            return
+        lines = analytics.weekly_report(analytics.load_data(days=7))
+        self.weekly_textbox.configure(state="normal")
+        self.weekly_textbox.delete("1.0", "end")
+        self.weekly_textbox.insert("end", "\n\n".join(lines))
+        self.weekly_textbox.configure(state="disabled")
+
+    def _export_to_csv(self):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            initialfile="focuslens_data.csv"
+        )
+        if file_path:
+            df = analytics.load_data(days=30)
+            analytics.export_csv(df, file_path)
+            messagebox.showinfo("Export Successful", f"Saved 30-day usage data to:\n{file_path}")
+
+    def _clear_all_data(self):
+        if messagebox.askyesno("Confirm Clear", "Are you sure you want to erase all logged tracking data?"):
+            database.clear_all()
+            self.refresh_all_visuals()
+            self._refresh_quick_suggestions()
+            messagebox.showinfo("Cleared", "All tracking data has been cleared.")
+
+    def _on_closing(self):
+        if self.pomo_job:
+            self.after_cancel(self.pomo_job)
+        if self.tracker.running:
+            self.tracker.stop()
+        self.destroy()
