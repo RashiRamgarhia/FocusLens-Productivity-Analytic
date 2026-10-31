@@ -184,3 +184,49 @@ def save_custom_category(app_name, category):
     conn = get_connection()
     conn.execute("""
         INSERT INTO custom_categories (app_name, category) VALUES (?, ?) 
+        ON CONFLICT(app_name) DO UPDATE SET category = excluded.category
+    """, (app_name, category))
+    conn.commit()
+    conn.close()
+
+
+def remove_custom_category(app_name):
+    app_name = str(app_name).strip().lower().replace(".exe", "")
+    if not app_name:
+        return
+    conn = get_connection()
+    conn.execute("DELETE FROM custom_categories WHERE LOWER(app_name) = ?", (app_name,))
+    conn.commit()
+    conn.close()
+
+
+def get_today_apps():
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT DISTINCT app_name FROM usage WHERE date = ? ORDER BY seconds DESC", (today,)
+    ).fetchall()
+    conn.close()
+    return [r[0] for r in rows if r[0]]
+
+
+def add_focus_session(work_minutes, break_minutes):
+    now = datetime.now()
+    conn = get_connection()
+    conn.execute("""
+        INSERT INTO focus_sessions (timestamp, date, work_minutes, break_minutes) 
+        VALUES (?, ?, ?, ?)
+    """, (now.isoformat(), now.strftime("%Y-%m-%d"), int(work_minutes), int(break_minutes)))
+    conn.commit()
+    conn.close()
+
+
+def get_focus_sessions(limit=5):
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT date, work_minutes, break_minutes 
+        FROM focus_sessions 
+        ORDER BY id DESC LIMIT ?
+    """, (limit,)).fetchall()
+    conn.close()
+    return rows
