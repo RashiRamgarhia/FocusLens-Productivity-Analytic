@@ -89,3 +89,48 @@ class FocusLensApp(ctk.CTk):
         ).pack(pady=(24, 2))
 
         ctk.CTkLabel(
+            self.sidebar, text="Productivity Tracker", font=ctk.CTkFont(size=12),
+            text_color=COLORS["subtext"]
+        ).pack(pady=(0, 20))
+
+        self.track_btn = ctk.CTkButton(
+            self.sidebar, text="Start Tracking", command=self._toggle_tracking,
+            fg_color=COLORS["accent"], hover_color="#2980B9", height=38,
+            font=ctk.CTkFont(size=13, weight="bold")
+        )
+        self.track_btn.pack(padx=16, pady=6, fill="x")
+
+        self.status_lbl = ctk.CTkLabel(
+            self.sidebar, text="○ Tracker Paused", text_color=COLORS["subtext"],
+            font=ctk.CTkFont(size=12)
+        )
+        self.status_lbl.pack(pady=(2, 14))
+
+        self.alert_switch = ctk.CTkSwitch(
+            self.sidebar, text="Unproductive Alert", command=self._toggle_focus_mode,
+            progress_color=COLORS["accent"]
+        )
+        self.alert_switch.pack(padx=16, pady=8, anchor="w")
+
+        ctk.CTkFrame(self.sidebar, height=1, fg_color=COLORS["border"]).pack(fill="x", padx=16, pady=16)
+
+        self.nav_btns = {}
+        tab_names = ["Dashboard", "Activity History", "Pomodoro Timer", "Weekly Summary", "Settings", "Export & Data"]
+        for name in tab_names:
+            btn = ctk.CTkButton(
+                self.sidebar, text=name, height=36,
+                fg_color="transparent", hover_color="#2A2F3B", anchor="w",
+                font=ctk.CTkFont(size=13),
+                command=lambda n=name: self._show_tab(n)
+            )
+            btn.pack(fill="x", padx=12, pady=3)
+            self.nav_btns[name] = btn
+
+    def _build_tabs(self):
+        self.tab_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.tab_container.pack(side="right", fill="both", expand=True, padx=16, pady=16)
+
+        self.tabs = {
+            "Dashboard": self._create_dashboard_tab(),
+            "Activity History": self._create_history_tab(),
+            "Pomodoro Timer": self._create_pomodoro_tab(),
