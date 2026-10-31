@@ -450,3 +450,49 @@ class FocusLensApp(ctk.CTk):
         self.canvas_history.draw_idle()
 
         self._refresh_weekly_summary()
+
+    def _auto_refresh_loop(self):
+        self.refresh_all_visuals()
+        self.after(20000, self._auto_refresh_loop)
+
+    def _check_warnings_loop(self):
+        while not self.tracker.warnings.empty():
+            bad_app = self.tracker.warnings.get()
+            self._show_distraction_notice(bad_app)
+        self.after(1000, self._check_warnings_loop)
+
+    def _toggle_tracking(self):
+        if self.tracker.running:
+            self.tracker.stop()
+            self.track_btn.configure(text="Start Tracking", fg_color=COLORS["accent"])
+            self.status_lbl.configure(text="○ Tracker Paused", text_color=COLORS["subtext"])
+        else:
+            self.tracker.start()
+            self.track_btn.configure(text="Stop Tracking", fg_color=COLORS["Unproductive"], hover_color="#CC0000")
+            self.status_lbl.configure(text="● Tracking Active", text_color=COLORS["Productive"])
+
+    def _toggle_focus_mode(self):
+        self.tracker.focus_mode = bool(self.alert_switch.get())
+
+    def _show_distraction_notice(self, app_name):
+        # Prevent spamming multiple alert popups
+        if self.active_alert and self.active_alert.winfo_exists():
+            return
+
+        try:
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+        except Exception:
+            pass
+
+        self.active_alert = ctk.CTkToplevel(self)
+        self.active_alert.title("Focus Reminder")
+        self.active_alert.geometry("340x120")
+        self.active_alert.resizable(False, False)
+        self.active_alert.attributes("-topmost", True)
+
+        ctk.CTkLabel(self.active_alert, text="Unproductive App Reminder", font=ctk.CTkFont(size=15, weight="bold"),
+                     text_color=COLORS["Unproductive"]).pack(pady=(16, 4))
+        ctk.CTkLabel(self.active_alert, text=f"{app_name} is marked as Unproductive.\nReady to get back to work?").pack()
+        self.active_alert.after(4000, lambda: self.active_alert.destroy() if self.active_alert and self.active_alert.winfo_exists() else None)
+
+    # ------------------ POMODORO LOGIC ------------------
