@@ -127,3 +127,45 @@ def get_category(app_name):
 
     if _matches_known_app(app_lower, PRODUCTIVE_APPS) or any(s in app_lower for s in PRODUCTIVE_SITES):
         return "Productive"
+    if _matches_known_app(app_lower, UNPRODUCTIVE_APPS) or any(s in app_lower for s in UNPRODUCTIVE_SITES):
+        return "Unproductive"
+    return "Necessary"
+
+
+def _matches_known_app(app_name, known_apps):
+    return any(
+        app_name == known or app_name.startswith(f"{known}.")
+        for known in known_apps
+    )
+
+
+def get_app_label(process_name, window_title=""):
+    proc = str(process_name or "").lower().replace(".exe", "").strip()
+    if not proc:
+        return "desktop"
+
+    title = str(window_title or "").lower().strip()
+
+    # Special handling for Windows Store (UWP) apps
+    if proc == "applicationframehost":
+        if title:
+            for item in PRODUCTIVE_APPS + UNPRODUCTIVE_APPS + PRODUCTIVE_SITES + UNPRODUCTIVE_SITES:
+                if item in title:
+                    return item
+            clean_title = title.split(" - ")[0].split(" — ")[0].strip()
+            return clean_title if clean_title else "store-app"
+        return "store-app"
+
+    # If it is a browser, extract site from window title
+    if proc in BROWSERS:
+        for site in PRODUCTIVE_SITES + UNPRODUCTIVE_SITES:
+            if site in title:
+                return site
+        return proc
+
+    # Also check if process matches a known productive or unproductive app
+    for app in UNPRODUCTIVE_APPS + PRODUCTIVE_APPS:
+        if app in proc:
+            return app
+
+    return proc
