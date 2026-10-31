@@ -71,3 +71,40 @@ def _is_media_active(app_name):
     return any(k in lower for k in MEDIA_KEYWORDS)
 
 
+class Tracker:
+    def __init__(self):
+        self.running = False
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.current_app = "Stopped"
+        self.last_app = None
+        self.focus_mode = False
+        self.last_warning_time = 0
+        self.warnings = queue.Queue()
+        self.last_error = None
+
+    def start(self):
+        if self.running:
+            return
+        database.create_tables()
+        self.stop_event.clear()
+        self.running = True
+        self.thread = threading.Thread(target=self._run_loop, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        self.running = False
+        self.stop_event.set()
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=1.5)
+        self.thread = None
+        self.current_app = "Stopped"
+        self.last_app = None
+
+    def _run_loop(self):
+        last_time = time.monotonic()
+        while self.running:
+            try:
+                now = time.monotonic()
+                elapsed = max(0, int(now - last_time))
+                last_time = now
