@@ -75,3 +75,41 @@ def calculate_metrics(df, days=1):
     penalty = min(switches_per_hour * 0.4, 25.0)
     focus_efficiency = max(0.0, round(raw_score - penalty, 1))
 
+    return {
+        "score": round(raw_score),
+        "productive_time": format_time(prod_sec),
+        "unproductive_time": format_time(unprod_sec),
+        "distracting_time": format_time(unprod_sec),
+        "necessary_time": format_time(nec_sec),
+        "other_time": format_time(nec_sec),
+        "neutral_time": format_time(nec_sec),
+        "context_switches": switches,
+        "focus_efficiency": focus_efficiency,
+        "goal_minutes": goal_minutes,
+        "productive_minutes": int(prod_sec // 60),
+    }
+
+
+def hourly_intensity_matrix(df):
+    hours = np.arange(24)
+    matrix = pd.DataFrame(0.0, index=hours, columns=categories.CATEGORY_NAMES)
+
+    if not df.empty:
+        grouped = df.groupby(["hour", "category"])["seconds"].sum().unstack(fill_value=0)
+        for cat in categories.CATEGORY_NAMES:
+            if cat in grouped.columns:
+                matrix[cat] = grouped[cat].reindex(hours, fill_value=0.0)
+
+    matrix = matrix.fillna(0.0)
+    return matrix / 60.0
+
+
+def top_apps_breakdown(df, limit=5):
+    if df.empty:
+        return pd.Series(dtype=float)
+    totals = df.groupby("app_name")["seconds"].sum().sort_values(ascending=False).head(limit)
+    return totals / 60.0
+
+
+def weekly_trend(df):
+    if df.empty:
