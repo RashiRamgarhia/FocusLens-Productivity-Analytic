@@ -134,3 +134,48 @@ class FocusLensApp(ctk.CTk):
             "Dashboard": self._create_dashboard_tab(),
             "Activity History": self._create_history_tab(),
             "Pomodoro Timer": self._create_pomodoro_tab(),
+            "Weekly Summary": self._create_weekly_tab(),
+            "Settings": self._create_settings_tab(),
+            "Export & Data": self._create_export_tab(),
+        }
+        self._show_tab("Dashboard")
+
+    def _show_tab(self, name):
+        for tab_name, frame in self.tabs.items():
+            if tab_name == name:
+                frame.pack(fill="both", expand=True)
+                self.nav_btns[tab_name].configure(fg_color="#2A2F3B")
+                if tab_name == "Settings":
+                    self._refresh_quick_suggestions()
+            else:
+                frame.pack_forget()
+                self.nav_btns[tab_name].configure(fg_color="transparent")
+
+    # ------------------ DASHBOARD TAB ------------------
+    def _create_dashboard_tab(self):
+        tab = ctk.CTkFrame(self.tab_container, fg_color="transparent")
+
+        # KPI Summary cards
+        kpi_row = ctk.CTkFrame(tab, fg_color="transparent")
+        kpi_row.pack(fill="x", pady=(0, 10))
+
+        self.kpi_labels = {}
+        cards = [
+            ("Score", "0%", COLORS["Productive"]),
+            ("Focus Efficiency", "0.0", COLORS["accent"]),
+            ("Productive Time", "0h 00m", COLORS["Productive"]),
+            ("Unproductive", "0h 00m", COLORS["Unproductive"]),
+            ("App Switches", "0", COLORS["subtext"])
+        ]
+        for title, val, color in cards:
+            card = ctk.CTkFrame(kpi_row, fg_color=COLORS["card"], corner_radius=8)
+            card.pack(side="left", fill="both", expand=True, padx=4)
+            ctk.CTkLabel(card, text=title.upper(), font=ctk.CTkFont(size=10, weight="bold"),
+                         text_color=COLORS["subtext"]).pack(pady=(10, 0))
+            lbl = ctk.CTkLabel(card, text=val, font=ctk.CTkFont(size=18, weight="bold"), text_color=color)
+            lbl.pack(pady=(0, 10))
+            self.kpi_labels[title] = lbl
+
+        # Chart Zone
+        chart_frame = ctk.CTkFrame(tab, fg_color="transparent")
+        chart_frame.pack(fill="both", expand=True)
