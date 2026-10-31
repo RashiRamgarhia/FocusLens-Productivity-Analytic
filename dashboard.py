@@ -496,3 +496,48 @@ class FocusLensApp(ctk.CTk):
         self.active_alert.after(4000, lambda: self.active_alert.destroy() if self.active_alert and self.active_alert.winfo_exists() else None)
 
     # ------------------ POMODORO LOGIC ------------------
+    def _apply_pomodoro_settings(self):
+        try:
+            work = int(self.work_minutes_var.get())
+            pause = int(self.break_minutes_var.get())
+            if not (1 <= work <= 180 and 1 <= pause <= 60):
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter 1–180 minutes for work and 1–60 for break.")
+            return
+
+        self.work_seconds = work * 60
+        self.break_seconds = pause * 60
+        self._reset_pomodoro()
+
+    def _toggle_pomodoro(self):
+        if self.pomodoro_running:
+            self.pomodoro_running = False
+            if self.pomo_job:
+                self.after_cancel(self.pomo_job)
+                self.pomo_job = None
+            self.pomo_action_btn.configure(text="Resume")
+        else:
+            self.pomodoro_running = True
+            self.pomo_action_btn.configure(text="Pause")
+            if self.pomo_job:
+                self.after_cancel(self.pomo_job)
+            self.pomo_job = self.after(1000, self._pomo_tick)
+
+    def _pomo_tick(self):
+        if not self.pomodoro_running:
+            return
+
+        if self.time_left > 0:
+            self.time_left -= 1
+            mins = self.time_left // 60
+            secs = self.time_left % 60
+            self.pomo_clock_lbl.configure(text=f"{mins:02d}:{secs:02d}")
+            self.pomo_job = self.after(1000, self._pomo_tick)
+        else:
+            # Interval complete
+            try:
+                winsound.MessageBeep(winsound.MB_ICONASTERISK)
+            except Exception:
+                pass
+
