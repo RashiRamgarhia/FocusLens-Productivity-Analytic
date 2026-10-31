@@ -541,3 +541,48 @@ class FocusLensApp(ctk.CTk):
             except Exception:
                 pass
 
+            if self.is_work_time:
+                database.add_focus_session(self.work_seconds // 60, self.break_seconds // 60)
+                self._update_session_history_label()
+
+            self.is_work_time = not self.is_work_time
+            self.time_left = self.work_seconds if self.is_work_time else self.break_seconds
+            status_text = "Focus Session" if self.is_work_time else "Break Time"
+            self.pomo_title_lbl.configure(text=status_text)
+
+            mins = self.time_left // 60
+            secs = self.time_left % 60
+            self.pomo_clock_lbl.configure(text=f"{mins:02d}:{secs:02d}")
+
+            messagebox.showinfo("Pomodoro Timer", f"Time is up! Starting: {status_text}")
+            self.pomo_job = self.after(1000, self._pomo_tick)
+
+    def _reset_pomodoro(self):
+        if self.pomo_job:
+            self.after_cancel(self.pomo_job)
+            self.pomo_job = None
+        self.pomodoro_running = False
+        self.is_work_time = True
+        self.time_left = self.work_seconds
+        self.pomo_title_lbl.configure(text="Focus Session")
+
+        mins = self.time_left // 60
+        secs = self.time_left % 60
+        self.pomo_clock_lbl.configure(text=f"{mins:02d}:{secs:02d}")
+        self.pomo_action_btn.configure(text="Start Session")
+
+    def _update_session_history_label(self):
+        sessions = database.get_focus_sessions(5)
+        if not sessions:
+            self.pomo_history_lbl.configure(text="Recent completed sessions: none yet")
+            return
+        lines = [f"{d}: {w}m work / {b}m break" for d, w, b in sessions]
+        self.pomo_history_lbl.configure(text="Recent completed sessions:\n" + "\n".join(lines))
+
+    # ------------------ SETTINGS ACTIONS ------------------
+    def _save_goal(self):
+        try:
+            minutes = int(self.goal_input_var.get())
+            if not 1 <= minutes <= 1440:
+                raise ValueError
+        except ValueError:
