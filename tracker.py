@@ -108,3 +108,39 @@ class Tracker:
                 now = time.monotonic()
                 elapsed = max(0, int(now - last_time))
                 last_time = now
+
+                idle = get_idle_seconds()
+                # Allow extended idle limit when watching video or streaming
+                idle_limit = MEDIA_IDLE_LIMIT_SECONDS if _is_media_active(self.last_app) else IDLE_LIMIT_SECONDS
+                if idle < idle_limit:
+                    raw_name, title = get_active_window()
+                    app_name = categories.get_app_label(raw_name, title)
+                    self.current_app = app_name
+
+                    if app_name != self.last_app:
+                        database.record_window_switch(app_name)
+                        self.last_app = app_name
+
+                    if elapsed > 0:
+                        database.add_usage(app_name, elapsed)
+
+                    self._check_distraction(app_name)
+                else:
+                    self.current_app = "Idle"
+            except Exception as exc:
+                # Keep the tracker alive, but retain diagnostics instead of
+                # silently losing all activity after an unexpected error.
+                self.last_error = f"{type(exc).__name__}: {exc}"
+
+            self.stop_event.wait(CHECK_INTERVAL)
+
+    def _check_distraction(self, app_name):
+        if not self.focus_mode or not app_name:
+            return
+        if categories.get_category(app_name) not in ("Unproductive", "Distracting"):
+            return
+
+        now = time.time()
+        if now - self.last_warning_time >= WARNING_COOLDOWN_SECONDS:
+            self.last_warning_time = now
+            self.warnings.put(app_name)
