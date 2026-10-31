@@ -315,3 +315,48 @@ class FocusLensApp(ctk.CTk):
         startup_box = ctk.CTkFrame(tab, fg_color=COLORS["card"])
         startup_box.pack(fill="x", pady=6)
         self.startup_var = tk.IntVar(value=1 if startup.is_enabled() else 0)
+        ctk.CTkSwitch(startup_box, text="Run FocusLens automatically on Windows startup",
+                      variable=self.startup_var, command=self._toggle_startup).pack(anchor="w", padx=16, pady=16)
+
+        return tab
+
+    def _refresh_quick_suggestions(self):
+        if not hasattr(self, "suggestions_frame"):
+            return
+        for child in self.suggestions_frame.winfo_children():
+            child.destroy()
+        try:
+            apps = database.get_today_apps()
+            if not apps:
+                return
+            ctk.CTkLabel(self.suggestions_frame, text="Recently detected today (click to select):",
+                         font=ctk.CTkFont(size=11), text_color=COLORS["subtext"]).pack(anchor="w", pady=(0, 3))
+            pills_row = ctk.CTkFrame(self.suggestions_frame, fg_color="transparent")
+            pills_row.pack(anchor="w", fill="x")
+            for app in apps[:8]:
+                ctk.CTkButton(
+                    pills_row, text=app, height=22, font=ctk.CTkFont(size=11),
+                    fg_color="#262A34", hover_color="#343A48",
+                    command=lambda a=app: self.new_app_name_var.set(a)
+                ).pack(side="left", padx=2, pady=2)
+        except Exception:
+            pass
+
+    # ------------------ EXPORT & DATA TAB ------------------
+    def _create_export_tab(self):
+        tab = ctk.CTkFrame(self.tab_container, fg_color="transparent")
+
+        card = ctk.CTkFrame(tab, fg_color=COLORS["card"], corner_radius=12, width=440)
+        card.place(relx=0.5, rely=0.5, anchor="center")
+
+        ctk.CTkLabel(card, text="Data Management", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(24, 8))
+        ctk.CTkLabel(card, text="Export your usage data or clear saved history.", text_color=COLORS["subtext"]).pack(pady=(0, 16))
+
+        ctk.CTkButton(card, text="Export CSV to File", width=220, command=self._export_to_csv).pack(pady=8)
+        ctk.CTkButton(card, text="Clear All History", width=220, fg_color=COLORS["Unproductive"],
+                      hover_color="#CC0000", command=self._clear_all_data).pack(pady=(8, 24))
+
+        return tab
+
+    # ------------------ REFRESH & CHARTS ------------------
+    def refresh_all_visuals(self):
