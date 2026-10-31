@@ -45,3 +45,49 @@ def _init_db(conn):
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS custom_categories (
+            app_name TEXT PRIMARY KEY COLLATE NOCASE,
+            category TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS focus_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            date TEXT NOT NULL,
+            work_minutes INTEGER NOT NULL,
+            break_minutes INTEGER NOT NULL
+        )
+    """)
+
+    # Migrate legacy category names
+    cursor.execute("UPDATE custom_categories SET category = 'Other' WHERE category IN ('Neutral', 'Necessary')")
+    cursor.execute("UPDATE custom_categories SET category = 'Unproductive' WHERE category = 'Distracting'")
+
+    conn.commit()
+
+
+def create_tables():
+    conn = get_connection()
+    conn.close()
+
+
+def add_usage(app_name, seconds):
+    if not app_name or seconds <= 0:
+        return
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+    hour = now.hour
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO usage (date, hour, app_name, seconds)
+        VALUES (?, ?, ?, ?)
