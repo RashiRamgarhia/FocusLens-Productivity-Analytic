@@ -151,3 +151,41 @@ def generate_insights(df):
 
     return insights
 
+
+def weekly_report(df):
+    metrics = calculate_metrics(df, days=7)
+    if df.empty:
+        return ["No activity recorded this week yet. Keep tracking to generate your summary."]
+
+    report = [
+        f"Focus score: {metrics['score']}%",
+        f"Productive time: {metrics['productive_time']}",
+        f"Unproductive time: {metrics['unproductive_time']}",
+        f"Focus efficiency: {metrics['focus_efficiency']}%",
+        f"Total app switches: {metrics['context_switches']}",
+    ]
+
+    unproductive = df[df["category"].isin(["Unproductive", "Distracting"])]
+    if not unproductive.empty:
+        worst_app = unproductive.groupby("app_name")["seconds"].sum().idxmax()
+        report.append(f"Biggest unproductive app: {worst_app}")
+    else:
+        report.append("No unproductive apps detected this week.")
+
+    productive = df[df["category"] == "Productive"]
+    if not productive.empty:
+        best_hour = productive.groupby("hour")["seconds"].sum().idxmax()
+        report.append(f"Best focus hour: {best_hour:02d}:00 to {(best_hour + 1) % 24:02d}:00")
+
+    if metrics["focus_efficiency"] < 60:
+        report.append("Tip: Try a short 25-minute Pomodoro session before browsing.")
+    elif metrics["context_switches"] > 40:
+        report.append("Tip: Group similar tasks together to minimize window switching.")
+    else:
+        report.append("Tip: You're doing great! Keep protecting your peak focus hours.")
+
+    return report
+
+
+def export_csv(df, path):
+    df.to_csv(path, index=False)
