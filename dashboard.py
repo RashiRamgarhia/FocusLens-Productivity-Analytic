@@ -179,3 +179,48 @@ class FocusLensApp(ctk.CTk):
         # Chart Zone
         chart_frame = ctk.CTkFrame(tab, fg_color="transparent")
         chart_frame.pack(fill="both", expand=True)
+
+        self.fig_dash = Figure(figsize=(7, 4), dpi=100)
+        self.canvas_dash = FigureCanvasTkAgg(self.fig_dash, master=chart_frame)
+        self.canvas_dash.get_tk_widget().pack(fill="both", expand=True)
+
+        # Insights Banner
+        self.insight_banner = ctk.CTkLabel(
+            tab, text="", font=ctk.CTkFont(size=12), text_color="#D5DBDB",
+            fg_color=COLORS["card"], corner_radius=8, height=34
+        )
+        self.insight_banner.pack(fill="x", pady=(8, 0))
+
+        # Goal Progress Bar
+        self.goal_text = ctk.CTkLabel(tab, text="Daily goal: 0m / 180m", text_color=COLORS["subtext"])
+        self.goal_text.pack(anchor="w", pady=(8, 2))
+        self.goal_progress = ctk.CTkProgressBar(tab, progress_color=COLORS["Productive"])
+        self.goal_progress.pack(fill="x")
+        self.goal_progress.set(0)
+
+        return tab
+
+    # ------------------ ACTIVITY HISTORY TAB ------------------
+    def _create_history_tab(self):
+        tab = ctk.CTkFrame(self.tab_container, fg_color="transparent")
+        self.fig_history = Figure(figsize=(8, 5), dpi=100)
+        self.canvas_history = FigureCanvasTkAgg(self.fig_history, master=tab)
+        self.canvas_history.get_tk_widget().pack(fill="both", expand=True)
+        return tab
+
+    # ------------------ POMODORO TAB ------------------
+    def _create_pomodoro_tab(self):
+        card_holder = ctk.CTkFrame(self.tab_container, fg_color="transparent")
+
+        card = ctk.CTkFrame(card_holder, fg_color=COLORS["card"], corner_radius=12, width=440, height=400)
+        card.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.pomo_title_lbl = ctk.CTkLabel(
+            card, text="Focus Session", font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS["accent"]
+        )
+        self.pomo_title_lbl.pack(pady=(24, 6))
+
+        inputs_row = ctk.CTkFrame(card, fg_color="transparent")
+        inputs_row.pack(pady=4)
+        ctk.CTkLabel(inputs_row, text="Work (min):").pack(side="left", padx=4)
