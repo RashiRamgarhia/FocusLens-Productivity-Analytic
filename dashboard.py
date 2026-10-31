@@ -224,3 +224,49 @@ class FocusLensApp(ctk.CTk):
         inputs_row = ctk.CTkFrame(card, fg_color="transparent")
         inputs_row.pack(pady=4)
         ctk.CTkLabel(inputs_row, text="Work (min):").pack(side="left", padx=4)
+        ctk.CTkEntry(inputs_row, width=45, textvariable=self.work_minutes_var).pack(side="left", padx=4)
+        ctk.CTkLabel(inputs_row, text="Break (min):").pack(side="left", padx=(12, 4))
+        ctk.CTkEntry(inputs_row, width=45, textvariable=self.break_minutes_var).pack(side="left", padx=4)
+        ctk.CTkButton(inputs_row, text="Apply", width=60, command=self._apply_pomodoro_settings).pack(side="left", padx=8)
+
+        self.pomo_clock_lbl = ctk.CTkLabel(
+            card, text="25:00", font=ctk.CTkFont(size=56, weight="bold"), text_color="#FFFFFF"
+        )
+        self.pomo_clock_lbl.pack(pady=12)
+
+        btn_row = ctk.CTkFrame(card, fg_color="transparent")
+        btn_row.pack(pady=10)
+
+        self.pomo_action_btn = ctk.CTkButton(
+            btn_row, text="Start Session", width=110, command=self._toggle_pomodoro,
+            fg_color=COLORS["accent"]
+        )
+        self.pomo_action_btn.pack(side="left", padx=8)
+
+        ctk.CTkButton(
+            btn_row, text="Reset", width=80, fg_color="#34495E", hover_color="#415B76",
+            command=self._reset_pomodoro
+        ).pack(side="left", padx=8)
+
+        self.pomo_history_lbl = ctk.CTkLabel(
+            card, text="Recent sessions: none yet", text_color=COLORS["subtext"], justify="left"
+        )
+        self.pomo_history_lbl.pack(pady=(16, 20))
+        self._update_session_history_label()
+
+        return card_holder
+
+    # ------------------ WEEKLY SUMMARY TAB ------------------
+    def _create_weekly_tab(self):
+        tab = ctk.CTkFrame(self.tab_container, fg_color="transparent")
+        ctk.CTkLabel(tab, text="Weekly Summary", font=ctk.CTkFont(size=22, weight="bold")).pack(anchor="w", pady=(10, 4))
+        ctk.CTkLabel(tab, text="A simple overview of your computer usage over the last 7 days.",
+                     text_color=COLORS["subtext"]).pack(anchor="w")
+
+        self.weekly_textbox = ctk.CTkTextbox(tab, fg_color=COLORS["card"], corner_radius=10, font=ctk.CTkFont(size=14))
+        self.weekly_textbox.pack(fill="both", expand=True, pady=16)
+
+        ctk.CTkButton(tab, text="Refresh Report", width=120, command=self._refresh_weekly_summary).pack(anchor="e")
+        self._refresh_weekly_summary()
+        return tab
+
