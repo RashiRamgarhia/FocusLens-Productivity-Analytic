@@ -37,3 +37,41 @@ def load_data(days=1):
         return pd.DataFrame(columns=["date", "hour", "app_name", "seconds", "category"])
 
     df = pd.DataFrame(rows, columns=["date", "hour", "app_name", "seconds"])
+    df["category"] = df["app_name"].apply(categories.get_category)
+    return df
+
+
+def calculate_metrics(df, days=1):
+    goal_minutes = get_daily_goal_minutes()
+    if df.empty:
+        return {
+            "score": 0,
+            "productive_time": "0h 00m",
+            "unproductive_time": "0h 00m",
+            "distracting_time": "0h 00m",
+            "necessary_time": "0h 00m",
+            "other_time": "0h 00m",
+            "neutral_time": "0h 00m",
+            "context_switches": 0,
+            "focus_efficiency": 0.0,
+            "goal_minutes": goal_minutes,
+            "productive_minutes": 0,
+        }
+
+    prod_sec = float(df[df["category"] == "Productive"]["seconds"].sum())
+    unprod_sec = float(df[df["category"].isin(["Unproductive", "Distracting"])]["seconds"].sum())
+    nec_sec = float(df[df["category"].isin(["Necessary", "Neutral", "Other"])]["seconds"].sum())
+
+    rated_time = prod_sec + unprod_sec
+    raw_score = (prod_sec / rated_time * 100) if rated_time > 0 else 0
+
+    today = datetime.now().date()
+    start = today - timedelta(days=max(0, days - 1))
+    switches = database.get_switch_count(str(start), str(today))
+
+    # Small penalty if there is excessive window switching
+    total_hours = max((prod_sec + unprod_sec + nec_sec) / 3600.0, 0.5)
+    switches_per_hour = switches / total_hours
+    penalty = min(switches_per_hour * 0.4, 25.0)
+    focus_efficiency = max(0.0, round(raw_score - penalty, 1))
+
